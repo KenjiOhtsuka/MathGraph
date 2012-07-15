@@ -11,7 +11,9 @@
       </div>
       <div id="panel">
         <form method="">
-           <input type="button" value="原点を中心に表示" />
+           <input type="button" id="resetOrigin" value="原点を中心に表示" /><br />
+           y = <input type="text" id="equation1" value="x * x - 3 * x - 5" />
+           <input type="button" id="draw" value="描画" onclick="drawAll();"  />
         </form>
       </div>
     </div>
@@ -22,13 +24,26 @@
         'height': parseInt(canvas.height), 
         'width': parseInt(canvas.width)
       };
+      var style = {
+      }
       var origin = [size['width'] / 2, size['height'] / 2];
       var lineInterval = [5, 5];
       var subLineDistance = [10, 10];
       var density = [10, 10];
       var unit = [1, 1];
-      drawSheet(1, origin, context);
-      drawGraph(context);
+      drawAll();
+      function checkEquation(id) {
+        var inputString = document.getElementById(id).value;
+        return true;
+      }
+      function drawAll() {
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        if (!checkEquation()) {
+          return;
+        }
+        drawSheet(1, origin, context);
+        drawGraph(context);
+      }
       function convertToCanvasPosition(position) {
         var canvasPosition = [0, 0];
         canvasPosition[0] = origin[0] + position[0] * subLineDistance[0] / unit[0];
@@ -42,11 +57,12 @@
         return mathPosition;
       }
       function cy(cx) {
-        var mx = convertToMathPosition([cx, 0])[0];
-        var my = 1/mx;// 0.2* mx* mx*mx*mx + 0.2 * mx * mx * mx - 3 * mx * mx  + 1;
+        var x = convertToMathPosition([cx, 0])[0];
+        var my = eval(document.getElementById("equation1").value);
         return convertToCanvasPosition([0, my])[1];
       }
       function drawGraph(ctx) {
+        ctx.restore();
         ctx.beginPath();
         applyGraphStyle(ctx);
         var beginPoint = [0, 0], endPoint = [0, 0];
