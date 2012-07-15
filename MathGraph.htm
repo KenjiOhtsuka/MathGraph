@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <title></title>
+  </head>
+  <body>
+    <div style="width:600px;">
+      <div style="float:left;">
+        <canvas id="MathGraph" width="400" height="400"></canvas>
+      </div>
+      <div id="panel">
+        <form method="">
+           <input type="button" value="原点を中心に表示" />
+        </form>
+      </div>
+    </div>
+    <script>
+      var canvas = document.getElementById("MathGraph");
+      var context = canvas.getContext('2d');
+      var size = {
+        'height': parseInt(canvas.height), 
+        'width': parseInt(canvas.width)
+      };
+      var origin = [size['width'] / 2, size['height'] / 2];
+      var lineInterval = [5, 5];
+      var subLineDistance = [10, 10];
+      var density = [10, 10];
+      var unit = [1, 1];
+      drawSheet(1, origin, context);
+      drawGraph(context);
+      function convertToCanvasPosition(position) {
+        var canvasPosition = [0, 0];
+        canvasPosition[0] = origin[0] + position[0] * subLineDistance[0] / unit[0];
+        canvasPosition[1] = origin[1] - position[1] * subLineDistance[1] / unit[1];
+        return canvasPosition;
+      }
+      function convertToMathPosition(position) {
+        var mathPosition = [0, 0];
+        mathPosition[0] = (position[0] - origin[0]) * unit[0] / subLineDistance[0];
+        mathPosition[1] = - (position[1] - origin[1]) * unit[1] / subLineDistance[1];
+        return mathPosition;
+      }
+      function cy(cx) {
+        var mx = convertToMathPosition([cx, 0])[0];
+        var my = 1/mx;// 0.2* mx* mx*mx*mx + 0.2 * mx * mx * mx - 3 * mx * mx  + 1;
+        return convertToCanvasPosition([0, my])[1];
+      }
+      function drawGraph(ctx) {
+        ctx.beginPath();
+        applyGraphStyle(ctx);
+        var beginPoint = [0, 0], endPoint = [0, 0];
+        var first = true;
+        var flg = true;
+        for (beginPoint[0] = 0; beginPoint[0] < size['width']; beginPoint[0] += subLineDistance[0] / density[0]) {
+          beginPoint[1] = cy(beginPoint[0]);
+          if (!first) {
+            drawLine(ctx, beginPoint, endPoint);
+          } else {
+            first = false;
+          }
+          endPoint[0] = beginPoint[0];
+          endPoint[1] = beginPoint[1];
+        }
+        ctx.stroke();
+      }
+      function drawSheet(zoom, origin, ctx) {
+        // Draw Sub Line
+        ctx.beginPath();
+        applySubLineStyle(ctx);
+        for (var i = 1; i * subLineDistance[1] + origin[1] <= size['height']; i++) {
+          drawLine(ctx, [0, i * subLineDistance[1] + origin[1]], [size['width'], i * subLineDistance[1] + origin[1]]);
+        }
+        for (var i = 1; - i * subLineDistance + origin[1] >= 0; i++) {
+          drawLine(ctx, [0, - i * subLineDistance[1] + origin[1]], [size['width'], - i * subLineDistance[1] + origin[1]]);
+        }
+        for (var i = 1; i * subLineDistance[0] + origin[0] <= size['width']; i++) {
+          drawLine(ctx, [i * subLineDistance[0] + origin[0], 0], [i * subLineDistance[0] + origin[0], size['height']]);
+        }
+        for (var i = 1; - i * subLineDistance[0] + origin[0] >=  0; i ++) {
+          drawLine(ctx, [- i * subLineDistance[0] + origin[0], 0], [- i * subLineDistance[0] + origin[0], size['height']]);
+        }
+        ctx.stroke();
+        // Draw Line
+        ctx.beginPath();
+        applyLineStyle(ctx);
+        for (var i = 0; i * subLineDistance[1] + origin[1] <= size['width']; i += lineInterval[1]) {
+          drawLine(ctx, [0, i * subLineDistance[1] + origin[1]], [size['width'], i * subLineDistance[1] + origin[1]]);
+        }
+        for (var i = 0; - i * subLineDistance[1] + origin[1] >= 0; i += lineInterval[1]) {
+          drawLine(ctx, [0, - i * subLineDistance[1] + origin[1]], [size['width'], - i * subLineDistance[1] + origin[1]]);
+        }
+        for (var i = 0; i * subLineDistance[0] + origin[0] <= size['height']; i += lineInterval[0]) {
+          drawLine(ctx, [i * subLineDistance[0] + origin[0], 0], [i * subLineDistance[0] + origin[0], size['height']]);
+        }
+        for (var i = 0; - i * subLineDistance[0] + origin[0] >= 0; i += lineInterval[0]) {
+          drawLine(ctx, [- i * subLineDistance[0] + origin[0], 0], [- i * subLineDistance[0] + origin[0], size['height']]);
+        }
+        drawLine
+        ctx.stroke();
+        // Draw Axis
+        ctx.beginPath();
+        applyAxisStyle(ctx);
+        drawLine(ctx, [origin[0], 0], [origin[0], size['width']]);
+        drawLine(ctx, [0, origin[1]], [size['height'], origin[1]]);
+        ctx.stroke();
+      } 
+      function drawLine(ctx, startPosition, endPosition) {
+        ctx.moveTo(startPosition[0], startPosition[1]);
+        ctx.lineTo(endPosition[0], endPosition[1]);
+      }
+      function applyAxisStyle (ctx) {
+        ctx.strokeStyle = 'blue';
+        ctx.lineWidth = 1;
+      }
+      function applyGraphStyle (ctx) {
+        ctx.strokeStyle = 'black';
+        ctx.lineWidth = 1;
+      }
+      function applySubLineStyle(ctx) {
+        ctx.strokeStyle = 'lightblue';
+        ctx.lineWidth = 0.5;
+      }
+      function applyLineStyle(ctx) {
+        ctx.strokeStyle = 'blue';
+        ctx.lineWidth = 0.8;
+      }
+    </script>
+  </body>
+</html>
