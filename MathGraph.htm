@@ -11,13 +11,28 @@
       </div>
       <div id="panel">
         <form method="">
+           <input type="button" id="zoomIn" value="拡大" />
+           <input type="button" id="zoomOut" value="縮小" />
            <input type="button" id="resetOrigin" value="原点を中心に表示" /><br />
-           y = <input type="text" id="equation1" value="x * x - 3 * x - 5" />
+           y = <input type="text" name="explicit" value="x * x - 3 * x - 5" />
+           y = <input type="text" name="explicit" value="x - 1" />
+           y = <input type="text" name="explicit" value="x - 3 * x - 5" />
+           y = <input type="text" name="explicit" value="x * x * x - 3 * x - 5" />
+           y = <input type="text" name="explicit" value="x * x * x* x- 3 * x - 5" />
            <input type="button" id="draw" value="描画" onclick="drawAll();"  />
         </form>
       </div>
     </div>
     <script>
+      window.onload = function() {
+        var doc = document;
+        doc.getElementById("zoomIn").onclick = function () {
+          zoom(2);
+        }
+        doc.getElementById("zoomOut").onclick = function () {
+          zoom(0.5);
+        }
+      }
       var canvas = document.getElementById("MathGraph");
       var context = canvas.getContext('2d');
       var size = {
@@ -31,18 +46,33 @@
       var subLineDistance = [10, 10];
       var density = [10, 10];
       var unit = [1, 1];
+      var ErrorMessage = {
+        'ExpressionError':"式を正しく入力してください。"
+      };
       drawAll();
-      function checkEquation(id) {
-        var inputString = document.getElementById(id).value;
-        return true;
+      function zoom(rate) {
+        subLineDistance[0] *= rate;
+        subLineDistance[1] *= rate;
+        drawAll();
+      }
+      function checkExpression(equation) {
+        return equation.match(/^[\(\)\^\dx\*\+-\/]+$/g);
       }
       function drawAll() {
-        context.clearRect(0, 0, canvas.width, canvas.height);
-        if (!checkEquation()) {
-          return;
+        var explicits = document.getElementsByName('explicit');
+        var explicitFormulas = [];
+        for (var i = 0; i < explicits.length; i++) {
+          explicitFormulas[i] = minimizeExpression(explicits[i].value);
+          if (!checkExpression(explicitFormulas[i])) {
+            alert(ErrorMessage['ExpressionError']);
+            return;
+          }
         }
+        context.clearRect(0, 0, canvas.width, canvas.height);
         drawSheet(1, origin, context);
-        drawGraph(context);
+        for (var i = 0; i < explicitFormulas.length; i++) {
+          drawGraph(context, explicitFormulas[i]);
+        }
       }
       function convertToCanvasPosition(position) {
         var canvasPosition = [0, 0];
@@ -56,20 +86,22 @@
         mathPosition[1] = - (position[1] - origin[1]) * unit[1] / subLineDistance[1];
         return mathPosition;
       }
-      function cy(cx) {
+      function cy(cx, expression) {
         var x = convertToMathPosition([cx, 0])[0];
-        var my = eval(document.getElementById("equation1").value);
+        var my = eval(expression);
         return convertToCanvasPosition([0, my])[1];
       }
-      function drawGraph(ctx) {
-        ctx.restore();
+      function minimizeExpression(targetExpression) {
+        return targetExpression.replace(/[\s　]/g, '').replace(/[\[{]/g, '(').replace(/[\]}]/g, ')');
+      }
+      function drawGraph(ctx, explicit) {
         ctx.beginPath();
         applyGraphStyle(ctx);
         var beginPoint = [0, 0], endPoint = [0, 0];
         var first = true;
         var flg = true;
         for (beginPoint[0] = 0; beginPoint[0] < size['width']; beginPoint[0] += subLineDistance[0] / density[0]) {
-          beginPoint[1] = cy(beginPoint[0]);
+          beginPoint[1] = cy(beginPoint[0], explicit);
           if (!first) {
             drawLine(ctx, beginPoint, endPoint);
           } else {
@@ -87,7 +119,7 @@
         for (var i = 1; i * subLineDistance[1] + origin[1] <= size['height']; i++) {
           drawLine(ctx, [0, i * subLineDistance[1] + origin[1]], [size['width'], i * subLineDistance[1] + origin[1]]);
         }
-        for (var i = 1; - i * subLineDistance + origin[1] >= 0; i++) {
+        for (var i = 1; - i * subLineDistance[1] + origin[1] >= 0; i++) {
           drawLine(ctx, [0, - i * subLineDistance[1] + origin[1]], [size['width'], - i * subLineDistance[1] + origin[1]]);
         }
         for (var i = 1; i * subLineDistance[0] + origin[0] <= size['width']; i++) {
