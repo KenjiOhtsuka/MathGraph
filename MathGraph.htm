@@ -5,33 +5,52 @@
     <title></title>
   </head>
   <body>
-    <div style="width:600px;">
-      <div style="float:left;">
-        <canvas id="MathGraph" width="400" height="400"></canvas>
+    <div style='width:700px;'>
+      <div style='float:left;'>
+        <canvas id='MathGraph' width='400' height='400'></canvas>
       </div>
-      <div id="panel">
-        <form method="">
-           <input type="button" id="zoomIn" value="拡大" />
-           <input type="button" id="zoomOut" value="縮小" />
-           <input type="button" id="resetOrigin" value="原点を中心に表示" /><br />
-           y = <input type="text" name="explicit" value="x * x - 3 * x - 5" />
-           y = <input type="text" name="explicit" value="x - 1" />
-           y = <input type="text" name="explicit" value="x - 3 * x - 5" />
-           y = <input type="text" name="explicit" value="x * x * x - 3 * x - 5" />
-           y = <input type="text" name="explicit" value="x * x * x* x- 3 * x - 5" />
-           <input type="button" id="draw" value="描画" onclick="drawAll();"  />
+      <div id='panel'>
+        <form method=''>
+           <input type='button' id='zoomIn' value='拡大' />
+           <input type='button' id='zoomOut' value='縮小' />
+           <input type='button' id='resetOrigin' value='原点を中心に表示' /><br />
+           <div id='explicitFunctions'>
+             <div>y = <input type='text' name='explicit' value='x * x - 3 * x - 5' /><input type='button' name='remove' value='-' /></div>
+             <div>y = <input type='text' name='explicit' value='x - 1' /><input type='button' name='remove' value='-' /></div>
+             <div>y = <input type='text' name='explicit' value='x - 3 * x - 5' /><input type='button' name='remove' value='-' /></div>
+           </div>
+           <input type='button' id='add' value='追加' />
+           <input type='button' id='draw' value='描画' onclick='drawAll();'  />
         </form>
       </div>
     </div>
     <script>
       window.onload = function() {
         var doc = document;
-        doc.getElementById("zoomIn").onclick = function () {
+        doc.getElementById('zoomIn').onclick = function () {
           zoom(2);
         }
-        doc.getElementById("zoomOut").onclick = function () {
+        doc.getElementById('zoomOut').onclick = function () {
           zoom(0.5);
         }
+        doc.getElementById('add').onclick = function () {
+          var newDiv = doc.createElement('div');
+          newDiv.innerHTML = 'y = <input type=\'text\' name=\'explicit\' value=\'\' /><input type=\'button\' id=\'remove\' value=\'-\' onclick=\'removeSet(this);\' />';
+          doc.getElementById('explicitFunctions').appendChild(newDiv);
+        }
+        addRemoveFunction(doc.getElementsByName('remove'));
+      }
+      function addRemoveFunction(buttons) {
+        for (var i = 0; i < buttons.length; i++) {
+          buttons[i].onclick = function () {
+            var targetNode = this.parentNode;
+            targetNode.parentNode.removeChild(targetNode);
+          };
+        }
+      }
+      function removeSet(node) {
+        var targetNode = node.parentNode;
+        targetNode.parentNode.removeChild(targetNode);
       }
       var canvas = document.getElementById("MathGraph");
       var context = canvas.getContext('2d');
@@ -44,11 +63,34 @@
       var origin = [size['width'] / 2, size['height'] / 2];
       var lineInterval = [5, 5];
       var subLineDistance = [10, 10];
-      var density = [10, 10];
+      var density = [1, 1];
       var unit = [1, 1];
-      var ErrorMessage = {
-        'ExpressionError':"式を正しく入力してください。"
-      };
+      var Statuses = [
+        'Success',
+        'Nothing',
+        'IllegalLetter',
+        'ParenthesisEmpty',
+        'ParenthesisOrder',
+        'ParenthesisNumber',
+        'ErrorBegin',
+        'ErrorEnd',
+        'TwoOperators',
+        'TooMuch'
+      ];
+      var Messages = [
+        "成功",
+        "式がありません。",
+        "式に不適切な文字が含まれています。",
+        "括弧の中が空です。",
+        "括弧の順序が間違っています。",
+        "括弧の数が一致しません。",
+        "最初の文字に問題があります。",
+        "最後の文字に問題があります。",
+        "演算子が連続しています。",
+        "式が長すぎます。",
+        "小数点が正しくありません。",
+        "式を正しく入力してください。"
+      ];
       drawAll();
       function zoom(rate) {
         subLineDistance[0] *= rate;
@@ -56,22 +98,85 @@
         drawAll();
       }
       function checkExpression(equation) {
-        return equation.match(/^[\(\)\^\dx\*\+-\/]+$/g);
+        equation = equation.replace(/\(\)/g, '');
+        if (equation == '') {
+          return [Statuses.indexOf('Success'), ''];
+          //return [Statuses.indexOf('Nothing'), ''];
+        }
+        if (-1 === equation.search(/^([\(\)\^\dx\.\*\+\-\/]|pi|e)+$/)) {
+          return [Statuses.indexOf('IllegalLetter'), ''];
+        }
+        //if (-1 !== equation.search(/\(\)/)) {
+        //  return [Statuses.indexOf('ParenthesisEmpty'), ''];
+        //}
+        if (-1 !== equation.search(/^[\*\/)]/)) {
+          return [Statuses.indexOf('ErrorBegin'), ''];
+        }
+        if (-1 !== equation.search(/[\+\-\*/\(]$/)) {
+          return [Statuses.indexOf('ErrorEnd'), ''];
+        }
+        if (-1 !== equation.search(/[\*\+\-\/\^]{2}/)) {
+          return [Statuses.indexOf('TwoOperators'), ''];
+        }
+        var parenthesisDepth = 0;
+        var cursor = 0;
+        var resultChars = [];
+        for (var i = 0; i < equation.length; i++) {
+          resultChars[cursor++] = equation[i];
+          switch(equation[i]) {
+            case '(':
+              if (-1 !== equation[i + 1].search(/[\*\/\^]/)) {
+                return [Statuses.indexOf('ParenthesisOperator'), ''];
+              }
+              parenthesisDepth++;
+              if (i > 0 &&  -1 !== equation[i - 1].search(/[\)\dxei]/)) {
+                resultChars[cursor - 1] = '*';
+                resultChars[cursor++] = '(';
+              }
+              break;
+            case ')':
+              if (-1 !== equation[i - 1].search(/[\+\-\*\/\^]/)) {
+                return [Statuses.indexOf('ParenthesisOperator'), ''];
+              }
+              parenthesisDepth--;
+              if (i < equation.length - 1 &&  -1 !== equation[i + 1].search(/[\)\dxep]/)) {
+                resultChars[cursor++] = '*';
+              }
+          }
+          if (parenthesisDepth < 0) {
+            return [Statuses.indexOf('ParenthesisOrder'), ''];
+          }
+        }
+        if (parenthesisDepth !== 0) {
+          return [Statuses.indexOf('ParenthesDepth'), ''];
+        }
+        var resultExpression = makeExpressionAvailable(resultChars.join(''));
+        return [Statuses.indexOf('Success'), resultExpression];
+      }
+      function makeExpressionAvailable(expression) {
+        var resultExpression = expression.replace(/pi/g, 'Math.PI');
+        resultExpression = resultExpression.replace(/e/g, 'Math.E');
+        return resultExpression;
       }
       function drawAll() {
         var explicits = document.getElementsByName('explicit');
         var explicitFormulas = [];
         for (var i = 0; i < explicits.length; i++) {
           explicitFormulas[i] = minimizeExpression(explicits[i].value);
-          if (!checkExpression(explicitFormulas[i])) {
-            alert(ErrorMessage['ExpressionError']);
+          var checkedValue = checkExpression(explicitFormulas[i]);
+          if (checkedValue[0] !== Statuses.indexOf('Success')) {
+            alert(Messages[checkedValue[0]]);
             return;
+          } else {
+            explicitFormulas[i] = checkedValue[1];
           }
         }
         context.clearRect(0, 0, canvas.width, canvas.height);
         drawSheet(1, origin, context);
         for (var i = 0; i < explicitFormulas.length; i++) {
-          drawGraph(context, explicitFormulas[i]);
+          if (explicitFormulas[i] != '') {
+            drawGraph(context, explicitFormulas[i]);
+          }
         }
       }
       function convertToCanvasPosition(position) {
@@ -91,6 +196,9 @@
         var my = eval(expression);
         return convertToCanvasPosition([0, my])[1];
       }
+      function my(x, expression) {
+        return eval(expression);
+      }
       function minimizeExpression(targetExpression) {
         return targetExpression.replace(/[\s　]/g, '').replace(/[\[{]/g, '(').replace(/[\]}]/g, ')');
       }
@@ -98,9 +206,24 @@
         ctx.beginPath();
         applyGraphStyle(ctx);
         var beginPoint = [0, 0], endPoint = [0, 0];
+        var middlePoint = [0, 0];
+        var minX = convertToMathPosition([0, 0])[0];
+        var maxX = convertToMathPosition([canvas.width, 0])[0];
+ 
         var first = true;
         var flg = true;
-        for (beginPoint[0] = 0; beginPoint[0] < size['width']; beginPoint[0] += subLineDistance[0] / density[0]) {
+        //for (beginPoint[0] = minX; beginPoint[0] < maxX; beginPoint[0] += density[0]) {
+        //  beginPoint[1] = my(beginPoint[0], explicit);
+        //  middlePoint = convertToCanvasPosition(beginPoint);
+        //  if (!first) {
+        //    drawLine(ctx, middlePoint, endPoint);
+        //  } else {
+        //    first = false;
+        //  }
+        //  endPoint[0] = middlePoint[0];
+        //  endPoint[1] = middlePoint[1];
+        //}
+        for (beginPoint[0] = 0; beginPoint[0] < size['width']; beginPoint[0] += density[0]) {
           beginPoint[1] = cy(beginPoint[0], explicit);
           if (!first) {
             drawLine(ctx, beginPoint, endPoint);
