@@ -75,7 +75,8 @@
         'ErrorBegin',
         'ErrorEnd',
         'TwoOperators',
-        'TooMuch'
+        'TooMuch',
+        'TwoDots'
       ];
       var Messages = [
         "成功",
@@ -105,6 +106,9 @@
         }
         if (-1 === equation.search(/^([\(\)\^\dx\.\*\+\-\/]|pi|e)+$/)) {
           return [Statuses.indexOf('IllegalLetter'), ''];
+        }
+        if (-1 !== equation.search(/\.\d\./)) {
+          return [Statuses.indexOf('TwoDots'), ''];
         }
         //if (-1 !== equation.search(/\(\)/)) {
         //  return [Statuses.indexOf('ParenthesisEmpty'), ''];
