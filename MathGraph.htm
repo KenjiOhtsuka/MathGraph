@@ -3,6 +3,12 @@
   <head>
     <meta charset="utf-8" />
     <title></title>
+    <style>
+      .value {
+        text-align: right;
+        width: 100px;
+      }
+    </style>
   </head>
   <body>
     <div style='width:700px;'>
@@ -17,16 +23,26 @@
            <div id='explicitFunctions'>
              <div>y = <input type='text' name='explicit' value='x * x - 3 * x - 5' /><input type='button' name='remove' value='-' /></div>
              <div>y = <input type='text' name='explicit' value='x - 1' /><input type='button' name='remove' value='-' /></div>
-             <div>y = <input type='text' name='explicit' value='x - 3 * x - 5' /><input type='button' name='remove' value='-' /></div>
            </div>
            <input type='button' id='add' value='追加' />
+           <div id='parametricFunctions'>
+             <div name='parametric'>
+               x = <input type='text' name='parametricX' value='t' /><br />
+               y = <input type='text' name='parametricY' value='3 / t' /><br />
+               t = [
+                 <input type='number' name='parameterMin' class='value' value='-0.1' />,
+                 <input type='number' name='parameterMax' class='value' value='0.1' />
+               ]
+             </div>
+             <input type='button' id='addParametric' value='追加' />
+           </div>
            <input type='button' id='draw' value='描画' onclick='drawAll();'  />
         </form>
       </div>
     </div>
     <script>
+      var doc = document;
       window.onload = function() {
-        var doc = document;
         doc.getElementById('zoomIn').onclick = function () {
           zoom(2);
         }
@@ -39,6 +55,11 @@
           doc.getElementById('explicitFunctions').appendChild(newDiv);
         }
         addRemoveFunction(doc.getElementsByName('remove'));
+        doc.getElementById('addParametric').onclick = function () {
+          var newDiv = doc.createElement('div');
+          newDiv.innerHTML = 'x = <input type=\'text\' name=\'parametricX\' value=\'t\' /><br />y = <input type=\'text\' name=\'parametricY\' value=\'\' /><br />t = [ <input type=\'number\' name=\'parameterMax\' class=\'value\' value=\'\' />, <input type=\'number\' name=\'parameterMin\' class=\'value\' value=\'\' /> ]';
+          doc.getElementById('parametricFunctions').appendChild(newDiv);
+        }
       }
       function addRemoveFunction(buttons) {
         for (var i = 0; i < buttons.length; i++) {
@@ -98,14 +119,22 @@
         subLineDistance[1] *= rate;
         drawAll();
       }
-      function checkExpression(equation) {
+      function checkExpression(equation, pattern) {
         equation = equation.replace(/\(\)/g, '');
         if (equation == '') {
           return [Statuses.indexOf('Success'), ''];
           //return [Statuses.indexOf('Nothing'), ''];
         }
-        if (-1 === equation.search(/^([\(\)\^\dx\.\*\+\-\/]|pi|e)+$/)) {
-          return [Statuses.indexOf('IllegalLetter'), ''];
+        switch (pattern) {
+          case 'explicit':
+            if (-1 === equation.search(/^([\(\)\^\dx\.\*\+\-\/]|pi|e)+$/)) {
+              return [Statuses.indexOf('IllegalLetter'), ''];
+            }
+            break;
+          case 'parametric':
+            if (-1 === equation.search(/^([\(\)\^\dt\.\*\+\-\/]|pi|e)+$/)) {
+              return [Statuses.indexOf('IllegalLetter'), ''];
+            }
         }
         if (-1 !== equation.search(/\.\d\./)) {
           return [Statuses.indexOf('TwoDots'), ''];
@@ -133,7 +162,7 @@
                 return [Statuses.indexOf('ParenthesisOperator'), ''];
               }
               parenthesisDepth++;
-              if (i > 0 &&  -1 !== equation[i - 1].search(/[\)\dxei]/)) {
+              if (i > 0 &&  -1 !== equation[i - 1].search(/[\)\dtxei]/)) {
                 resultChars[cursor - 1] = '*';
                 resultChars[cursor++] = '(';
               }
@@ -143,7 +172,7 @@
                 return [Statuses.indexOf('ParenthesisOperator'), ''];
               }
               parenthesisDepth--;
-              if (i < equation.length - 1 &&  -1 !== equation[i + 1].search(/[\)\dxep]/)) {
+              if (i < equation.length - 1 &&  -1 !== equation[i + 1].search(/[\)\dtxep]/)) {
                 resultChars[cursor++] = '*';
               }
           }
@@ -162,31 +191,74 @@
         resultExpression = resultExpression.replace(/e/g, 'Math.E');
         return resultExpression;
       }
-      function drawAll() {
-        var explicits = document.getElementsByName('explicit');
-        var explicitFormulas = [];
-        for (var i = 0; i < explicits.length; i++) {
-          explicitFormulas[i] = minimizeExpression(explicits[i].value);
-          var checkedValue = checkExpression(explicitFormulas[i]);
-          if (checkedValue[0] !== Statuses.indexOf('Success')) {
-            alert(Messages[checkedValue[0]]);
-            return;
-          } else {
-            explicitFormulas[i] = checkedValue[1];
-          }
+      function convertExpression(expression, pattern) {
+        expression = minimizeExpression(expression);
+        var checkedValue = checkExpression(expression, pattern);
+        if (checkedValue[0] !== Statuses.indexOf('Success')) {
+          throw new Error(Messages[checkedValue[0]]);
         }
+        return checkedValue[1];
+      }
+      function drawAll() {
+        try {
+          // check explicit functions
+          var explicits = doc.getElementsByName('explicit');
+          var explicitFormulas = [];
+          for (var i = 0; i < explicits.length; i++) {
+            explicitFormulas[i] = convertExpression(explicits[i].value, 'explicit');
+          }
+          // check parametric functions
+          var in_parametrics = doc.getElementsByName('parametric');
+          var in_parametricXs = doc.getElementsByName('parametricX');
+          var in_parametricYs = doc.getElementsByName('parametricY');
+          var in_parameterMaxs = doc.getElementsByName('parameterMax');
+          var in_parameterMins = doc.getElementsByName('parameterMin');
+          var parametricXs = [], parametricYs = [];
+          var parameterDomains = [];
+          for (var i = 0; i < in_parametricXs.length; i++) {
+            parametricXs[i] = convertExpression(in_parametricXs[i].value, 'parametric');
+            parametricYs[i] = convertExpression(in_parametricYs[i].value, 'parametric');
+            parameterDomains[i] = [
+              minimizeExpression(in_parameterMins[i].value, 'parametric'),
+              minimizeExpression(in_parameterMaxs[i].value, 'parametric')
+            ];
+            if (parameterDomains[i][0] > parameterDomains[i][0]) {
+              throw new Error('');
+            }
+          }
+        } catch (e) {
+          alert(e.message);
+          return;
+        }
+        // clear canvas
         context.clearRect(0, 0, canvas.width, canvas.height);
         drawSheet(1, origin, context);
+        // draw explicit functions
         for (var i = 0; i < explicitFormulas.length; i++) {
           if (explicitFormulas[i] != '') {
             drawGraph(context, explicitFormulas[i]);
           }
         }
+        // draw parametric functions
+        for (var i = 0; i < parametricXs.length; i++) {
+          if (parametricXs[i] != '' && parametricYs[i] != '' && parameterDomains[i][0] != '' && parameterDomains[i][1] != '') {
+            drawParametricGraph(parametricXs[i], parametricYs[i], parameterDomains[i]);
+          }
+        }
       }
       function convertToCanvasPosition(position) {
         var canvasPosition = [0, 0];
-        canvasPosition[0] = origin[0] + position[0] * subLineDistance[0] / unit[0];
-        canvasPosition[1] = origin[1] - position[1] * subLineDistance[1] / unit[1];
+        if (position[0] !== undefined && isFinite(position[0])) {
+          canvasPosition[0] = origin[0] + position[0] * subLineDistance[0] / unit[0];
+        } else {
+          canvasPosition[0] = context.width;
+        }
+        if (position[1] !== undefined && isFinite(position[1])) {
+          canvasPosition[1] = origin[1] - position[1] * subLineDistance[1] / unit[1];
+        } else {
+          canvasPosition[1] = context.height;
+          console.log('aaa');
+        }
         return canvasPosition;
       }
       function convertToMathPosition(position) {
@@ -200,11 +272,14 @@
         var my = eval(expression);
         return convertToCanvasPosition([0, my])[1];
       }
+      function parametricExpressionValue(expression, t) {
+        return eval(expression);
+      }
       function my(x, expression) {
         return eval(expression);
       }
       function minimizeExpression(targetExpression) {
-        return targetExpression.replace(/[\s　]/g, '').replace(/[\[{]/g, '(').replace(/[\]}]/g, ')');
+        return targetExpression.toString().replace(/[\s　]/g, '').replace(/[\[{]/g, '(').replace(/[\]}]/g, ')');
       }
       function drawGraph(ctx, explicit) {
         ctx.beginPath();
@@ -238,6 +313,30 @@
           endPoint[1] = beginPoint[1];
         }
         ctx.stroke();
+      }
+      function drawParametricGraph(expressionX, expressionY, parameterDomain) {
+        context.beginPath();
+        applyGraphStyle(context);
+        var beginPoint = [0, 0], endPoint = [0, 0];
+        var t = 0;
+        var first = true;
+        var i = 0;
+        for (t = parseFloat(parameterDomain[0]); t <= parseFloat(parameterDomain[1]); t += 0.1) {
+          console.log(t);
+          beginPoint[0] = parametricExpressionValue(expressionX, t);
+          beginPoint[1] = parametricExpressionValue(expressionY, t);
+          console.log('m ' + beginPoint[0] + ' / ' + beginPoint[1]);
+          beginPoint = convertToCanvasPosition(beginPoint);
+          console.log('c ' + beginPoint[0] + ' / ' + beginPoint[1]);
+          if (!first) {
+            drawLine(context, beginPoint, endPoint);
+          } else {
+            first = false;
+          }
+          endPoint[0] = beginPoint[0];
+          endPoint[1] = beginPoint[1];
+        }
+        context.stroke();
       }
       function drawSheet(zoom, origin, ctx) {
         // Draw Sub Line
