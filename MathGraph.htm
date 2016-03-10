@@ -17,6 +17,20 @@
         backgroud-color: gray;
         padding: 5px;
       }
+      .panelButton {
+        display: inline-block;
+        background-color: pink;
+        padding: 1px 3px;
+      }
+      .panelButton.active {
+        background-color: red;
+      }
+      .panel {
+        display: none;
+      }
+      .panel.active {
+        display: block;
+      }
     </style>
   </head>
   <body>
@@ -24,28 +38,37 @@
       <div style='float:left;'>
         <canvas id='MathGraph' width='400' height='400' style="width:100%;"></canvas>
       </div>
-      <div id='panel'>
+      <div id="panel">
         <form method=''>
           <button type="button" id="zoomIn"><span class="fa fa-search-plus"></span></button>
           <button type="button" id="zoomOut"><span class="fa fa-search-minus"></span></button>
-           <input type='button' id='resetOrigin' value='原点を中心に表示' /><br />
-           <div id='explicitFunctions'>
-             <div>y = <input type='text' name='explicit' value='x * x - 3 * x - 5' /><input type='button' name='remove' value='-' /></div>
-             <div>y = <input type='text' name='explicit' value='x - 1' /><input type='button' name='remove' value='-' /></div>
-           </div>
-           <input type='button' id='add' value='追加' />
-           <div id='parametricFunctions'>
-             <div name='parametric'>
-               x = <input type='text' name='parametricX' value='t' /><br />
-               y = <input type='text' name='parametricY' value='3 / t' /><br />
-               t = [
-                 <input type='number' name='parameterMin' class='value' value='-0.1' />,
-                 <input type='number' name='parameterMax' class='value' value='0.1' />
-               ]
+          <input type='button' id='resetOrigin' value='原点を中心に表示' />
+          <div class="panelButtons">
+            <div class="panelButton active" data-panel-id="explicitPanel">Explicit</div>
+            <div class="panelButton" data-panel-id="parametricPanel">Parametric</div>
+            <div class="panelButton"></div>
+          </div>
+          <div class="panel active" id="explicitPanel">
+            <div id='explicitFunctions'>
+              <div>y = <input type='text' name='explicit' value='x * x - 3 * x - 5' /><button name="remove" type="button"><span class="fa fa-trash-o"></span></button></div>
+              <div>y = <input type='text' name='explicit' value='x - 1' /><button name="remove" type="button"><span class="fa fa-trash-o"></span></button></div>
+            </div>
+            <input type='button' id='add' value='追加' />
+          </div>
+          <div id='parametricPanel' class="panel">
+            <div id='parametricFunctions'>
+               <div name='parametric'>
+                 x = <input type='text' name='parametricX' value='t' /><br />
+                 y = <input type='text' name='parametricY' value='3 / t' /><br />
+                 t = [
+                   <input type='number' name='parameterMin' class='value' value='-0.1' />,
+                   <input type='number' name='parameterMax' class='value' value='0.1' />
+                 ]
+               </div>
+               <input type='button' id='addParametric' value='追加' />
              </div>
-             <input type='button' id='addParametric' value='追加' />
-           </div>
-           <input type='button' id='draw' value='描画' onclick='drawAll();'  />
+          </div>
+          <input type='button' id='draw' value='描画' onclick='drawAll();'  />
         </form>
       </div>
     </div>

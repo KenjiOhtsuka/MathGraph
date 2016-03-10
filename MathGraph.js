@@ -13,27 +13,44 @@ window.onload = function() {
   };
   origin = [size['width'] / 2, size['height'] / 2];
   drawAll();
-  doc.getElementById('zoomIn').onclick = function () {
+  doc.getElementById('zoomIn').ontouchstart = function () {
     zoom(2);
   }
-  doc.getElementById('zoomOut').onclick = function () {
+  doc.getElementById('zoomOut').ontouchstart = function () {
     zoom(0.5);
   }
-  doc.getElementById('add').onclick = function () {
+  doc.getElementById('add').ontouchstart = function () {
     var newDiv = doc.createElement('div');
-    newDiv.innerHTML = 'y = <input type=\'text\' name=\'explicit\' value=\'\' /><input type=\'button\' id=\'remove\' value=\'-\' onclick=\'removeSet(this);\' />';
+    newDiv.innerHTML = 'y = <input type=\'text\' name=\'explicit\' value=\'\' /><button type="button" ontouchstart=\'removeSet(this);\' name=\"remove\"><span class="fa fa-trash-o" name="remove"></span></button>';
     doc.getElementById('explicitFunctions').appendChild(newDiv);
   }
   addRemoveFunction(doc.getElementsByName('remove'));
-  doc.getElementById('addParametric').onclick = function () {
+  doc.getElementById('addParametric').ontouchstart = function () {
     var newDiv = doc.createElement('div');
     newDiv.innerHTML = 'x = <input type=\'text\' name=\'parametricX\' value=\'t\' /><br />y = <input type=\'text\' name=\'parametricY\' value=\'\' /><br />t = [ <input type=\'number\' name=\'parameterMax\' class=\'value\' value=\'\' />, <input type=\'number\' name=\'parameterMin\' class=\'value\' value=\'\' /> ]';
     doc.getElementById('parametricFunctions').appendChild(newDiv);
   }
+  var doms = doc.getElementsByClassName("panelButton");
+  for (var i = 0; i < doms.length; ++i) {
+    doms[i].ontouchstart = function () {
+      console.log(1);
+      var button = this;
+      if (button.classList.contains('active')) return;
+      var buttons = doc.getElementsByClassName('panelButton');
+      for (var i = 0; i < buttons.length; ++i) buttons[i].classList.remove('active');
+      button.classList.add('active');
+      var panelId = button.getAttribute('data-panel-id');
+      var doms = doc.getElementsByClassName("panel");
+      for (var i = 0; i < doms.length; ++i) doms[i].classList.remove('active');
+      doc.getElementById(panelId).classList.add('active');
+    }
+  }
+  
+
 }
 function addRemoveFunction(buttons) {
   for (var i = 0; i < buttons.length; i++) {
-    buttons[i].onclick = function () {
+    buttons[i].ontouchstart = function () {
       var targetNode = this.parentNode;
       targetNode.parentNode.removeChild(targetNode);
     };
