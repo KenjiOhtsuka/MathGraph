@@ -172,6 +172,7 @@ function drawAll() {
     var explicitFormulas = [];
     for (var i = 0; i < explicits.length; i++) {
       explicitFormulas[i] = convertExpression(explicits[i].value, 'explicit');
+      if (explicitFormulas[i] == '') continue;
       explicitFormulas[i] = check(explicitFormulas[i]);
     }
     // check parametric functions
@@ -224,16 +225,22 @@ function convertToCanvasPosition(position) {
     canvasPosition[1] = origin[1] - position[1] * subLineDistance[1] / unit[1];
   } else {
     canvasPosition[1] = context.height;
-    console.log('aaa');
   }
   return canvasPosition;
 }
+/**
+ * convert canvas position to math values
+ */
 function convertToMathPosition(position) {
   var mathPosition = [0, 0];
   mathPosition[0] = (position[0] - origin[0]) * unit[0] / subLineDistance[0];
   mathPosition[1] = - (position[1] - origin[1]) * unit[1] / subLineDistance[1];
   return mathPosition;
 }
+/**
+ * calculate canvas y
+ * from canvas x and expression
+ */
 function cy(cx, expression) {
   var x = convertToMathPosition([cx, 0])[0];
   var my = eval(expression);
@@ -289,12 +296,12 @@ function drawParametricGraph(expressionX, expressionY, parameterDomain) {
   var first = true;
   var i = 0;
   for (t = parseFloat(parameterDomain[0]); t <= parseFloat(parameterDomain[1]); t += 0.1) {
-    console.log(t);
+    // console.log(t)
     beginPoint[0] = parametricExpressionValue(expressionX, t);
     beginPoint[1] = parametricExpressionValue(expressionY, t);
-    console.log('m ' + beginPoint[0] + ' / ' + beginPoint[1]);
+    // console.log('m ' + beginPoint[0] + ' / ' + beginPoint[1]);
     beginPoint = convertToCanvasPosition(beginPoint);
-    console.log('c ' + beginPoint[0] + ' / ' + beginPoint[1]);
+    // console.log('c ' + beginPoint[0] + ' / ' + beginPoint[1]);
     if (!first) {
       drawLine(context, beginPoint, endPoint);
     } else {

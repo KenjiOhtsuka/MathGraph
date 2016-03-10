@@ -5,11 +5,17 @@
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
     <script src="formula_checker.js" type="text/javascript"></script>
     <script src="MathGraph.js" type="text/javascript"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
     <title></title>
     <style>
       .value {
         text-align: right;
         width: 100px;
+      }
+      input[type="button"], button {
+        border: none;
+        backgroud-color: gray;
+        padding: 5px;
       }
     </style>
   </head>
@@ -20,8 +26,8 @@
       </div>
       <div id='panel'>
         <form method=''>
-           <input type='button' id='zoomIn' value='拡大' />
-           <input type='button' id='zoomOut' value='縮小' />
+          <button type="button" id="zoomIn"><span class="fa fa-search-plus"></span></button>
+          <button type="button" id="zoomOut"><span class="fa fa-search-minus"></span></button>
            <input type='button' id='resetOrigin' value='原点を中心に表示' /><br />
            <div id='explicitFunctions'>
              <div>y = <input type='text' name='explicit' value='x * x - 3 * x - 5' /><input type='button' name='remove' value='-' /></div>
