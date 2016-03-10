@@ -45,8 +45,6 @@ window.onload = function() {
       doc.getElementById(panelId).classList.add('active');
     }
   }
-  
-
 }
 function addRemoveFunction(buttons) {
   for (var i = 0; i < buttons.length; i++) {
