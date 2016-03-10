@@ -43,6 +43,7 @@
           <button type="button" id="zoomIn"><span class="fa fa-search-plus"></span></button>
           <button type="button" id="zoomOut"><span class="fa fa-search-minus"></span></button>
           <input type='button' id='resetOrigin' value='原点を中心に表示' />
+          <button type='button' id='draw' onclick='drawAll();' ><span class="fa fa-refresh"></span></button>
           <div class="panelButtons">
             <div class="panelButton active" data-panel-id="explicitPanel">Explicit</div>
             <div class="panelButton" data-panel-id="parametricPanel">Parametric</div>
@@ -68,7 +69,6 @@
                <input type='button' id='addParametric' value='追加' />
              </div>
           </div>
-          <input type='button' id='draw' value='描画' onclick='drawAll();'  />
         </form>
       </div>
     </div>
